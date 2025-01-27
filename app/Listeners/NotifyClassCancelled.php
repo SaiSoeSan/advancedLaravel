@@ -3,9 +3,14 @@
 namespace App\Listeners;
 
 use App\Events\ClassCancelled;
+use App\Jobs\NotifyClassCancelledJob;
+use App\Mail\ClassCancelledMail;
+use App\Notifications\ClassCancelledNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 
 class NotifyClassCancelled
 {
@@ -22,7 +27,13 @@ class NotifyClassCancelled
      */
     public function handle(ClassCancelled $event): void
     {
-        $members = $event->scheduledClass->members();
-        $members->each(function ($user) {});
+        $members = $event->scheduledClass->members()->get();
+
+        $className = $event->scheduledClass->classType->name;
+        $classDateTime  = $event->scheduledClass->date_time;
+
+        $details = compact('className', 'classDateTime');
+
+        NotifyClassCancelledJob::dispatch($members, $details);
     }
 }
